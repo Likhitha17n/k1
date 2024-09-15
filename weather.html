@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script type="text/javascript">
+  // This is a CodeSandbox injection script that's used to
+  // add navigation and inspector functionality to the preview
+  (function () {
+    var script = document.createElement("script");
+    script.src = "https://codesandbox.io/p/preview-protocol.js";
+    script.defer = true;
+    script.async = true;
+    (document.body || document.documentElement).appendChild(script);
+  })();
+
+  const isIFramePreview = window.top !== window.self;
+
+  // Only run this script in editor context
+  if (isIFramePreview) {
+    // This script is used to enable Chrome DevTools functionality
+    (function () {
+      var script = document.createElement("script");
+      script.src =
+        "https://codesandbox.io/p/chrome-devtool/protocol/index.js";
+
+      script.onload = () => {
+        const devtoolProtocol = window.chobitsu;
+        if (devtoolProtocol) {
+          window.addEventListener("message", (event) => {
+            const { type, data } = event.data;
+
+            if (type === "FROM_DEVTOOL") {
+              devtoolProtocol.sendRawMessage(data);
+            }
+          });
+
+          devtoolProtocol.setOnMessage((data) => {
+            if (data.includes('"id":"tmp')) {
+              return;
+            }
+
+            window.parent.postMessage({ type: "TO_DEVTOOL", data }, "*");
+          });
+
+          devtoolProtocol.sendRawMessage(
+            `{"id":5,"method":"Runtime.enable","params":{}}`
+          );
+        }        
+      }
+
+      (document.head || document.documentElement).prepend(script);
+    })();
+  }
+
+  if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined") {
+    let nextID = 0;
+    let hook = (__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+      renderers: new Map(),
+      supportsFiber: true,
+      inject: (renderer) => {
+        const id = nextID++;
+        hook.renderers.set(id, renderer);
+        return id;
+      },
+      onScheduleFiberRoot() {},
+      onCommitFiberRoot() {},
+      onCommitFiberUnmount() {},
+    });
+  }
+
+  document.currentScript.remove();
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Namma Weather</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+      /* Logo Styles */
+      .logo {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-family: Arial, sans-serif;
+      }
+
+      .logo h1 {
+        font-size: 24px;
+        color: #0000FF; /* Blue color */
+        margin: 0;
+        padding: 0;
+      }
+
+      /* General Styles */
+      body {
+        font-family: Arial, sans-serif;
+        background: #f0f0f0;
+        color: #333;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+      }
+
+      .navbar {
+        background-color: #333;
+        padding: 1rem;
+      }
+
+      .nav-list {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      .nav-item {
+        margin: 0 15px;
+        color: white;
+        text-decoration: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+
+      .nav-item a {
+        color: white;
+        text-decoration: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+      }
+
+      .container {
+        padding: 50px 20px;
+      }
+
+      .form {
+        margin-bottom: 20px;
+      }
+
+      #input {
+        padding: 10px;
+        width: 300px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+
+      .button {
+        padding: 10px 20px;
+        margin-left: 10px;
+        border: none;
+        background-color: #4caf50;
+        color: white;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      .result-container {
+        margin-top: 20px;
+      }
+
+      .result-box {
+        display: inline-block;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .loader {
+        border: 16px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 16px solid #3498db;
+        width: 60px;
+        height: 60px;
+        animation: spin 2s linear infinite;
+        margin: auto;
+        display: none;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      footer {
+        background-color: #333;
+        color: white;
+        padding: 10px;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+      }
+
+      /* About Section Styles */
+      .about-section {
+        display: none;
+        padding: 50px 20px;
+      }
+
+      .about-section h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
+      }
+
+      .about-section p {
+        font-size: 1.2rem;
+        color: #555;
+      }
+    </style>
+</head>
+<body>
+    <!-- Logo -->
+    <div class="logo">
+      <h1>🌞☁️ Namma Weather ☀️🌧️</h1>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+      <ul class="nav-list">
+        <li class="nav-item" onclick="showHome()">Home</li>
+        <li class="nav-item" onclick="showAbout()">About</li>
+        <li class="nav-item"><a href="https://github.com/kishan9535">Contributors</a></li>
+      </ul>
+    </nav>
+
+    <!-- Home Section -->
+    <div id="home-section" class="container">
+      <header>
+        <div class="homepage">
+          <h1 class="landing-text">Namma Weather</h1>
+          <p class="landing-text-2">Where Is The Sun? Is It Above Or Below The Clouds?</p>
+        </div>
+      </header>
+
+      <!-- Search Form -->
+      <div class="form">
+        <input id="input" type="text" placeholder="Enter a city name" />
+        <button id="button" class="button" onclick="getWeather()">GO</button>
+        <button id="location-button" class="button" onclick="getLocationWeather()">Use My Location</button>
+      </div>
+
+      <!-- Weather Result -->
+      <div class="result-container">
+        <div id="loader" class="loader"></div>
+        <div id="result" class="result-box" style="display: none">
+          <h2 id="city-name"></h2>
+          <p id="weather-desc"></p>
+          <p><strong>Temperature:</strong> <span id="temperature"></span>°C</p>
+          <p><strong>Humidity:</strong> <span id="humidity"></span>%</p>
+          <p><strong>Wind Speed:</strong> <span id="wind-speed"></span> km/h</p>
+        </div>
+      </div>
+
+      <!-- Hourly Weather Chart -->
+      <div id="hourly-chart-container" style="display: none">
+        <canvas id="hourlyChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- About Section -->
+    <div id="about-section" class="about-section">
+      <h2>About Namma Weather</h2>
+      <p>Namma Weather is a weather application that provides accurate and real-time weather updates for cities around the world. Whether it's sunny, cloudy, or rainy, we give you the latest information at your fingertips.</p>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>Namma Weather is a weather application that displays the weather of any city.<br />© Kishan™ <span id="copyrightYear"></span></p>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const apiKey = "361f461bd053e84661b77a41ae71cf2b"; // Your OpenWeather API key
+
+      // Show Home Section
+      function showHome() {
+        document.getElementById('home-section').style.display = 'block';
+        document.getElementById('about-section').style.display = 'none';
+      }
+
+      // Show About Section
+      function showAbout() {
+        document.getElementById('home-section').style.display = 'none';
+        document.getElementById('about-section').style.display = 'block';
+      }
+
+      function getWeather() {
+        const city = document.getElementById("input").value.trim();
+
+        if (!city) {
+          alert("Please enter a city name.");
+          return;
+        }
+
+        const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+        const forecastUrl = `https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude=current,minutely,daily,alerts&appid=${apiKey}&units=metric`;
+
+        fetchWeatherData(weatherUrl, forecastUrl);
+      }
+
+      function getLocationWeather() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+            const forecastUrl = `https://api.openweathermap.org/data/2.5/onecall?lat=${lat}&lon=${lon}&exclude=current,minutely,daily,alerts&appid=${apiKey}&units=metric`;
+            fetchWeatherData(weatherUrl, forecastUrl);
+          });
+        } else {
+          alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function fetchWeatherData(weatherUrl, forecastUrl) {
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("result").style.display = "none";
+        document.getElementById("hourly-chart-container").style.display = "none";
+
+        fetch(weatherUrl)
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("result").style.display = "block";
+
+            document.getElementById("city-name").innerText = data.name;
+            document.getElementById("weather-desc").innerText = data.weather[0].description;
+            document.getElementById("temperature").innerText = data.main.temp;
+            document.getElementById("humidity").innerText = data.main.humidity;
+            document.getElementById("wind-speed").innerText = data.wind.speed;
+
+            fetch(forecastUrl)
+              .then((response) => response.json())
+              .then((forecastData) => {
+                displayHourlyChart(forecastData.hourly);
+              });
+          })
+          .catch((error) => {
+            document.getElementById("loader").style.display = "none";
+            alert("Error fetching weather data. Please try again.");
+          });
+      }
+
+      function displayHourlyChart(hourlyData) {
+        const hours = [];
+        const temps = [];
+
+        hourlyData.forEach((hour) => {
+          const date = new Date(hour.dt * 1000);
+          hours.push(`${date.getHours()}:00`);
+          temps.push(hour.temp);
+        });
+
+        document.getElementById("hourly-chart-container").style.display = "block";
+
+        const ctx = document.getElementById("hourlyChart").getContext("2d");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: hours,
+            datasets: [
+              {
+                label: "Hourly Temperature (°C)",
+                data: temps,
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 1,
+                fill: false,
+              },
+            ],
+          },
+          options: {
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+
+      document.getElementById("copyrightYear").innerText = new Date().getFullYear();
+    </script>
+</body>
+</html>
