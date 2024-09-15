@@ -1,95 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<script type="text/javascript">
-  // This is a CodeSandbox injection script that's used to
-  // add navigation and inspector functionality to the preview
-  (function () {
-    var script = document.createElement("script");
-    script.src = "https://codesandbox.io/p/preview-protocol.js";
-    script.defer = true;
-    script.async = true;
-    (document.body || document.documentElement).appendChild(script);
-  })();
-
-  const isIFramePreview = window.top !== window.self;
-
-  // Only run this script in editor context
-  if (isIFramePreview) {
-    // This script is used to enable Chrome DevTools functionality
-    (function () {
-      var script = document.createElement("script");
-      script.src =
-        "https://codesandbox.io/p/chrome-devtool/protocol/index.js";
-
-      script.onload = () => {
-        const devtoolProtocol = window.chobitsu;
-        if (devtoolProtocol) {
-          window.addEventListener("message", (event) => {
-            const { type, data } = event.data;
-
-            if (type === "FROM_DEVTOOL") {
-              devtoolProtocol.sendRawMessage(data);
-            }
-          });
-
-          devtoolProtocol.setOnMessage((data) => {
-            if (data.includes('"id":"tmp')) {
-              return;
-            }
-
-            window.parent.postMessage({ type: "TO_DEVTOOL", data }, "*");
-          });
-
-          devtoolProtocol.sendRawMessage(
-            `{"id":5,"method":"Runtime.enable","params":{}}`
-          );
-        }        
-      }
-
-      (document.head || document.documentElement).prepend(script);
-    })();
-  }
-
-  if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined") {
-    let nextID = 0;
-    let hook = (__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
-      renderers: new Map(),
-      supportsFiber: true,
-      inject: (renderer) => {
-        const id = nextID++;
-        hook.renderers.set(id, renderer);
-        return id;
-      },
-      onScheduleFiberRoot() {},
-      onCommitFiberRoot() {},
-      onCommitFiberUnmount() {},
-    });
-  }
-
-  document.currentScript.remove();
-</script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Namma Weather</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
     <style>
-      /* Logo Styles */
-      .logo {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        font-family: Arial, sans-serif;
-      }
-
-      .logo h1 {
-        font-size: 24px;
-        color: #0000FF; /* Blue color */
-        margin: 0;
-        padding: 0;
-      }
-
       /* General Styles */
       body {
         font-family: Arial, sans-serif;
@@ -100,6 +19,7 @@
         text-align: center;
       }
 
+      /* Navbar Styles */
       .navbar {
         background-color: #333;
         padding: 1rem;
@@ -111,25 +31,43 @@
         padding: 0;
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
       }
 
       .nav-item {
-        margin: 0 15px;
-        color: white;
-        text-decoration: none;
-        font-size: 1.2rem;
-        cursor: pointer;
+        margin: 0 10px;
       }
 
       .nav-item a {
         color: white;
         text-decoration: none;
-        font-size: 1.2rem;
-        cursor: pointer;
+        font-size: 1rem;
       }
 
+      .nav-item a:hover {
+        color: #4caf50;
+      }
+
+      /* Logo Styles */
+      .logo {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-family: Arial, sans-serif;
+      }
+
+      .logo h1 {
+        font-size: 20px;
+        color: #0000ff; /* Blue color */
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Content Styles */
       .container {
-        padding: 50px 20px;
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
       }
 
       .form {
@@ -138,9 +76,11 @@
 
       #input {
         padding: 10px;
-        width: 300px;
+        width: 100%;
+        max-width: 300px;
         border-radius: 5px;
         border: 1px solid #ccc;
+        box-sizing: border-box;
       }
 
       .button {
@@ -151,7 +91,7 @@
         color: white;
         cursor: pointer;
         border-radius: 5px;
-        font-size: 16px;
+        font-size: 1rem;
       }
 
       .result-container {
@@ -164,6 +104,7 @@
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 100%;
       }
 
       .loader {
@@ -178,38 +119,112 @@
       }
 
       @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
+      /* About Page Styles */
+      .about-section {
+        text-align: center;
+        padding: 20px;
+      }
+
+      .about-section h3 {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .about-section p {
+        font-size: 1rem;
+        color: #555;
+        margin: 10px 0;
+      }
+
+      .about-section ul {
+        list-style-type: none;
+        padding: 0;
+      }
+
+      .about-section li {
+        margin: 5px 0;
+      }
+
+      /* Footer Styles */
       footer {
         background-color: #333;
         color: white;
         padding: 10px;
         position: fixed;
         bottom: 0;
+        left: 0;
         width: 100%;
         text-align: center;
+        font-size: 0.9rem;
       }
 
-      /* About Section Styles */
-      .about-section {
-        display: none;
-        padding: 50px 20px;
+      /* Responsive Styles */
+      @media (max-width: 768px) {
+        .navbar {
+          padding: 0.5rem;
+        }
+
+        .nav-item {
+          margin: 0 5px;
+        }
+
+        .nav-item a {
+          font-size: 0.9rem;
+        }
+
+        .logo h1 {
+          font-size: 18px;
+        }
+
+        .button {
+          font-size: 0.9rem;
+          padding: 8px 16px;
+        }
       }
 
-      .about-section h2 {
-        font-size: 2rem;
-        margin-bottom: 20px;
-      }
+      @media (max-width: 480px) {
+        .logo {
+          position: static;
+          margin: 10px auto;
+        }
 
-      .about-section p {
-        font-size: 1.2rem;
-        color: #555;
+        .nav-list {
+          flex-direction: column;
+        }
+
+        .nav-item {
+          margin: 5px 0;
+        }
+
+        .container {
+          padding: 10px;
+        }
+
+        .button {
+          width: 100%;
+          margin: 10px 0;
+          font-size: 1rem;
+        }
+
+        .about-section h3 {
+          font-size: 1.2rem;
+        }
+
+        .about-section p {
+          font-size: 0.9rem;
+        }
       }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Logo -->
     <div class="logo">
       <h1>🌞☁️ Namma Weather ☀️🌧️</h1>
@@ -218,14 +233,14 @@
     <!-- Navbar -->
     <nav class="navbar">
       <ul class="nav-list">
-        <li class="nav-item" onclick="showHome()">Home</li>
-        <li class="nav-item" onclick="showAbout()">About</li>
+        <li class="nav-item"><a href="#home" onclick="showHome()">Home</a></li>
+        <li class="nav-item"><a href="#about" onclick="showAbout()">About</a></li>
         <li class="nav-item"><a href="https://github.com/kishan9535">Contributors</a></li>
       </ul>
     </nav>
 
-    <!-- Home Section -->
-    <div id="home-section" class="container">
+    <!-- Main Content -->
+    <div id="home" class="container">
       <header>
         <div class="homepage">
           <h1 class="landing-text">Namma Weather</h1>
@@ -258,32 +273,57 @@
       </div>
     </div>
 
-    <!-- About Section -->
-    <div id="about-section" class="about-section">
-      <h2>About Namma Weather</h2>
-      <p>Namma Weather is a weather application that provides accurate and real-time weather updates for cities around the world. Whether it's sunny, cloudy, or rainy, we give you the latest information at your fingertips.</p>
+    <!-- About Page -->
+    <div id="about" class="about-section" style="display: none">
+      <h3>Help Case</h3>
+      <p>
+        This website was developed to provide users with a quick and easy way to
+        check the weather conditions in their city. The aim is to offer accurate
+        and real-time weather information to help users plan their activities
+        effectively. We hope this tool makes it easier to stay informed about
+        the weather.
+      </p>
+
+      <h3>Tools and Technologies</h3>
+      <p>
+        The Namma Weather website was built using the following tools and
+        technologies:
+      </p>
+      <ul>
+        <li><strong>HTML5</strong> - For the structure of the website.</li>
+        <li><strong>CSS3</strong> - For styling and layout.</li>
+        <li><strong>JavaScript</strong> - For interactive features and dynamic content.</li>
+        <li><strong>Chart.js</strong> - For displaying the hourly weather chart.</li>
+        <li><strong>OpenWeatherMap API</strong> - For fetching weather data.</li>
+      </ul>
+
+      <!-- Social Media Links -->
+      <h3>Connect with Us</h3>
+      <p>
+        <a href="https://github.com/kishan9535" target="_blank">GitHub</a> |
+        <a href="https://leetcode.com/kishan9535/" target="_blank">LeetCode</a>
+      </p>
     </div>
 
     <!-- Footer -->
     <footer>
-      <p>Namma Weather is a weather application that displays the weather of any city.<br />© Kishan™ <span id="copyrightYear"></span></p>
+      <p>&copy; <span id="copyrightYear"></span> Kishan™</p>
     </footer>
 
+    <!-- JavaScript -->
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       const apiKey = "361f461bd053e84661b77a41ae71cf2b"; // Your OpenWeather API key
 
-      // Show Home Section
       function showHome() {
-        document.getElementById('home-section').style.display = 'block';
-        document.getElementById('about-section').style.display = 'none';
+        document.getElementById("home").style.display = "block";
+        document.getElementById("about").style.display = "none";
       }
 
-      // Show About Section
       function showAbout() {
-        document.getElementById('home-section').style.display = 'none';
-        document.getElementById('about-section').style.display = 'block';
+        document.getElementById("home").style.display = "none";
+        document.getElementById("about").style.display = "block";
       }
 
       function getWeather() {
@@ -382,5 +422,5 @@
 
       document.getElementById("copyrightYear").innerText = new Date().getFullYear();
     </script>
-</body>
+  </body>
 </html>
